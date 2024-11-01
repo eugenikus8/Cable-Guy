@@ -5,5 +5,5 @@
     "author": "eugenikus8",
     "factorio_version": "2.0",
     "dependencies": ["base >= 2.0.0"],
-    "description": "Shows alerts about entities consuming electricity and entities producing it that are disconnected from the electrical network."
+    "description": "Have you ever accidentally found a unconnected manipulator, accumulator or assembly machine not connected to the electrical network? With this mod you won't miss anything."
 }
