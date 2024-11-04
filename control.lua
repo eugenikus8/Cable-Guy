@@ -1,4 +1,5 @@
-﻿-- Define constants
+-- Define constants
+
 local CHECK_INTERVAL = 600
 
 -- Convert string settings to tables for white/black lists
@@ -64,12 +65,12 @@ local function on_tick(event)
 
                 -- Alert for consuming prototypes
                 if globsettings.alerts_all_consume_prototypes then
-                    if energy_source and (energy_source.usage_priority == "primary-input" or energy_source.usage_priority == "secondary-input") and entity.energy == 0 and not is_entity_in_blacklist then
+                    if energy_source and (energy_source.usage_priority == "primary-input" or energy_source.usage_priority == "secondary-input" or energy_source.usage_priority == "lamp") and entity.energy == 0 and not is_entity_in_blacklist then
                         table.insert(alerts["alerts.low-power"], {entity = entity, message = {"alerts.low-power"}})
                     end
                 else
                     if (whitelist_types[entity.type] or whitelist_names[entity.name]) and not is_entity_in_blacklist then
-                        if energy_source and (energy_source.usage_priority == "primary-input" or energy_source.usage_priority == "secondary-input") and entity.energy == 0 then
+                        if energy_source and (energy_source.usage_priority == "primary-input" or energy_source.usage_priority == "secondary-input" or energy_source.usage_priority == "lamp") and entity.energy == 0 then
                             table.insert(alerts["alerts.low-power"], {entity = entity, message = {"alerts.low-power"}})
                         end
                     end
@@ -77,12 +78,12 @@ local function on_tick(event)
 
                 -- Alert for generating prototypes
                 if globsettings.alerts_all_generic_prototypes then
-                    if (entity.type == "solar-panel" or entity.type == "generator" or entity.type == "burner-generator" or entity.type == "accumulator") and not is_within_pole_range(entity) and not is_entity_in_blacklist then
+                    if energy_source and (energy_source.usage_priority == "primary-output" or energy_source.usage_priority == "secondary-output" or energy_source.usage_priority == "tertiary" or energy_source.usage_priority == "solar" or entity.type == "accumulator") and not is_within_pole_range(entity) then
                         table.insert(alerts["alerts.not-connected"], {entity = entity, message = {"alerts.not-connected"}})
                     end
                 else
                     if (whitelist_types[entity.type] or whitelist_names[entity.name]) and not is_entity_in_blacklist then
-                        if (entity.type == "solar-panel" or entity.type == "generator" or entity.type == "burner-generator" or entity.type == "accumulator") and not is_within_pole_range(entity) then
+                        if energy_source and (energy_source.usage_priority == "primary-output" or energy_source.usage_priority == "secondary-output" or energy_source.usage_priority == "tertiary" or energy_source.usage_priority == "solar" or entity.type == "accumulator") and not is_within_pole_range(entity) then
                             table.insert(alerts["alerts.not-connected"], {entity = entity, message = {"alerts.not-connected"}})
                         end
                     end
