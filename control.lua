@@ -1,6 +1,9 @@
 -- Define constants
 local CHECK_INTERVAL = 600
 
+-- Storage for tracked entities
+local tracked_entities = {}
+
 -- Convert string settings to tables for white/black lists
 local function parse_list(setting)
     local values = {}
@@ -24,103 +27,79 @@ local function is_within_pole_range(entity)
     return false
 end
 
--- Main alert checking function
-local function on_tick(event)
-    if event.tick % CHECK_INTERVAL ~= 0 then return end
+-- Check the entity and add alerts if necessary
+local function check_entity(entity, player, settings)
+    if not entity.valid then return end
 
-    for _, player in pairs(game.connected_players) do
-        -- Initialize settings for each player
-        local globsettings = {
-            alerts_all_consume_prototypes = settings.get_player_settings(player)["alerts-all-consume-prototypes"].value,
-            alerts_all_generic_prototypes = settings.get_player_settings(player)["alerts-all-generic-prototypes"].value,
-            alerts_custom_types = settings.get_player_settings(player)["alerts-custom-types"].value,
-            alerts_custom_name = settings.get_player_settings(player)["alerts-custom-name"].value,
-            alerts_blacklist_types = settings.get_player_settings(player)["alerts-blacklist-types"].value,
-            alerts_blacklist_name = settings.get_player_settings(player)["alerts-blacklist-name"].value,
-            alerts_surface = settings.get_player_settings(player)["alerts-surface"].value
-        }
+    local energy_source = entity.prototype and entity.prototype.electric_energy_source_prototype
+    local is_blacklisted = settings.blacklist_types[entity.type] or settings.blacklist_names[entity.name]
 
-        -- Parse whitelist and blacklist settings
-        local whitelist_types = parse_list(globsettings.alerts_custom_types)
-        local whitelist_names = parse_list(globsettings.alerts_custom_name)
-        local blacklist_types = parse_list(globsettings.alerts_blacklist_types)
-        local blacklist_names = parse_list(globsettings.alerts_blacklist_name)
-
-        local alerts = {["alerts.low-power"] = {}, ["alerts.not-connected"] = {}}
-
-        -- Determine surfaces to check
-        local surfaces_to_check
-        if globsettings.alerts_surface == "alerts-surface-all-surfaces" then
-            surfaces_to_check = game.surfaces
-        else
-            surfaces_to_check = {player.surface}
-        end
-
-        -- Iterate through specified surfaces
-        for _, surface in pairs(surfaces_to_check) do
-            for _, entity in pairs(surface.find_entities_filtered({force = player.force})) do
-                local energy_source = entity.prototype and entity.prototype.electric_energy_source_prototype
-                local is_entity_in_blacklist = blacklist_types[entity.type] or blacklist_names[entity.name]
-
-                -- Alert for consuming prototypes
-                if globsettings.alerts_all_consume_prototypes
-                and not is_entity_in_blacklist then
-                    if energy_source and
-                    (energy_source.usage_priority == "primary-input" or
-                    energy_source.usage_priority == "secondary-input" or
-                    energy_source.usage_priority == "lamp") and
-                    entity.energy == 0 then
-                        table.insert(alerts["alerts.low-power"], {entity = entity, message = {"alerts.low-power"}})
-                    end
-                else
-                    if (whitelist_types[entity.type] or whitelist_names[entity.name])
-                    and not is_entity_in_blacklist then
-                        if energy_source and
-                        (energy_source.usage_priority == "primary-input" or
-                        energy_source.usage_priority == "secondary-input" or
-                        energy_source.usage_priority == "lamp") and
-                        entity.energy == 0 then
-                            table.insert(alerts["alerts.low-power"], {entity = entity, message = {"alerts.low-power"}})
-                        end
-                    end
-                end
-
-                -- Alert for generating prototypes
-                if globsettings.alerts_all_generic_prototypes
-                and not is_entity_in_blacklist
-                and not is_within_pole_range(entity) then
-                    if energy_source and
-                    (energy_source.usage_priority == "primary-output" or
-                    energy_source.usage_priority == "secondary-output" or
-                    energy_source.usage_priority == "tertiary" or
-                    energy_source.usage_priority == "solar" or
-                    entity.type == "accumulator") then
-                        table.insert(alerts["alerts.not-connected"], {entity = entity, message = {"alerts.not-connected", {"entity-name." .. entity.name}}})
-                    end
-                else
-                    if (whitelist_types[entity.type] or whitelist_names[entity.name])
-                    and not is_entity_in_blacklist
-                    and not is_within_pole_range(entity) then
-                        if energy_source and
-                        (energy_source.usage_priority == "primary-output" or
-                        energy_source.usage_priority == "secondary-output" or
-                        energy_source.usage_priority == "tertiary" or
-                        energy_source.usage_priority == "solar" or
-                        entity.type == "accumulator") then
-                            table.insert(alerts["alerts.not-connected"], {entity = entity, message = {"alerts.not-connected", {"entity-name." .. entity.name}}})
-                        end
-                    end
-                end
+    if energy_source then
+        -- Low-power alert
+        if settings.alerts_all_consume_prototypes and not is_blacklisted then
+            if (energy_source.usage_priority == "primary-input" or 
+                energy_source.usage_priority == "secondary-input" or 
+                energy_source.usage_priority == "lamp") and 
+                entity.energy == 0 then
+                player.add_custom_alert(entity, {type = "entity", name = entity.name}, {"alerts.low-power"}, true)
             end
         end
 
-        -- Display alerts for the player with formatted messages
-        for status, alerts_list in pairs(alerts) do
-            for _, alert in pairs(alerts_list) do
-                player.add_custom_alert(alert.entity, {type = "entity", name = alert.entity.name}, alert.message, true)
+        -- Not-connected alert
+        if settings.alerts_all_generic_prototypes and not is_blacklisted then
+            if not is_within_pole_range(entity) and 
+               (energy_source.usage_priority == "primary-output" or 
+                energy_source.usage_priority == "secondary-output" or 
+                energy_source.usage_priority == "tertiary" or 
+                energy_source.usage_priority == "solar" or 
+                entity.type == "accumulator") then
+                player.add_custom_alert(entity, {type = "entity", name = entity.name}, {"alerts.not-connected", {"entity-name." .. entity.name}}, true)
             end
         end
     end
 end
 
-script.on_event(defines.events.on_tick, on_tick)
+-- Event handlers for entity tracking
+local function on_built_entity(event)
+    local entity = event.created_entity or event.entity
+    if entity and entity.valid then
+        tracked_entities[entity.unit_number] = entity
+    end
+end
+
+local function on_entity_removed(event)
+    local entity = event.entity
+    if entity and entity.valid then
+        tracked_entities[entity.unit_number] = nil
+    end
+end
+
+-- Periodic check of tracked entities
+local function on_tick_check_entities()
+    for _, player in pairs(game.connected_players) do
+        local settings = {
+            alerts_all_consume_prototypes = settings.get_player_settings(player)["alerts-all-consume-prototypes"].value,
+            alerts_all_generic_prototypes = settings.get_player_settings(player)["alerts-all-generic-prototypes"].value,
+            blacklist_types = parse_list(settings.get_player_settings(player)["alerts-blacklist-types"].value),
+            blacklist_names = parse_list(settings.get_player_settings(player)["alerts-blacklist-name"].value)
+        }
+
+        for _, entity in pairs(tracked_entities) do
+            check_entity(entity, player, settings)
+        end
+    end
+end
+
+-- Register events
+script.on_event(defines.events.on_built_entity, on_built_entity)
+script.on_event(defines.events.on_robot_built_entity, on_built_entity)
+script.on_event(defines.events.on_entity_died, on_entity_removed)
+script.on_event(defines.events.on_player_mined_entity, on_entity_removed)
+script.on_event(defines.events.on_robot_mined_entity, on_entity_removed)
+
+-- Optional periodic check (reduces `on_tick` usage to once every 600 ticks)
+script.on_event(defines.events.on_tick, function(event)
+    if event.tick % CHECK_INTERVAL == 0 then
+        on_tick_check_entities()
+    end
+end)
