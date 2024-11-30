@@ -1,4 +1,4 @@
-﻿data:extend({
+data:extend({
     {
         type = "bool-setting",
         name = "alerts-all-consume-prototypes",
@@ -15,7 +15,7 @@
     },
     {
         type = "string-setting",
-        name = "alerts-custom-types",
+        name = "alerts-whitelist-type",
         setting_type = "runtime-per-user",
         allow_blank = true,
         default_value = "",
@@ -23,7 +23,7 @@
     },
     {
         type = "string-setting",
-        name = "alerts-custom-name",
+        name = "alerts-whitelist-name",
         setting_type = "runtime-per-user",
         allow_blank = true,
         default_value = "",
