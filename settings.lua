@@ -15,7 +15,7 @@ data:extend({
     },
     {
         type = "string-setting",
-        name = "alerts-whitelist-type",
+        name = "alerts-whitelist-types",
         setting_type = "runtime-per-user",
         allow_blank = true,
         default_value = "",
