@@ -1,4 +1,4 @@
--- Define constants
+﻿-- Define constants
 local CHECK_INTERVAL = 600
 
 -- Convert string settings to tables for white/black lists

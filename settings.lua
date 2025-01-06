@@ -1,4 +1,4 @@
-data:extend({
+﻿data:extend({
     {
         type = "bool-setting",
         name = "alerts-all-consume-prototypes",

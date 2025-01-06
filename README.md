@@ -1,3 +1,5 @@
+<a href='https://ko-fi.com/Q5Q418BPJA' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi3.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
 ![thumbnail](https://github.com/user-attachments/assets/8a7e5f28-4554-4798-a432-177a946139bb) 
 # Cable-Guy mods for Factorio
 
