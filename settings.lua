@@ -42,7 +42,7 @@
         name = "alerts-blacklist-name",
         setting_type = "runtime-per-user",
         allow_blank = true,
-        default_value = "",
+        default_value = "kr-spaceship-reactor, kr-spaceship-research-computer, kr-spaceship-material-fabricator-1, kr-spaceship-material-fabricator-2",
         order = "f"
     },
     {
