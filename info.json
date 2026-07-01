@@ -1,9 +1,11 @@
 {
-    "name": "Cable-Guy",
-    "version": "2.0.2",
-    "title": "Cable Guy",
-    "author": "eugenikus8",
-    "factorio_version": "2.0",
-    "dependencies": ["base >= 2.0.0"],
-    "description": "Have you ever accidentally found a manipulator, accumulator or assembly machine not connected to the electrical network? With this mod you won't miss anything. Shows alerts about entities consuming electricity and entities producing it that are disconnected from the electrical network."
+   "name": "Cable-Guy",
+   "version": "2.0.1",
+   "title": "Cable Guy",
+   "author": "eugenikus8",
+   "factorio_version": "2.1",
+   "dependencies": [
+      "base >= 2.1.0"
+   ],
+   "description": "Shows alerts about entities consuming electricity and entities producing it that are disconnected from the electrical network."
 }
